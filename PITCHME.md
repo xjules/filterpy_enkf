@@ -1,77 +1,79 @@
 ---
 marp: true
-title: Marp CLI example
-description: Hosting Marp slide deck on the web
 theme: uncover
 paginate: true
-_paginate: false
----
-
-![bg](./assets/gradient.jpg)
-
-# <!--fit--> Marp CLI example
-
-Hosting Marp slide deck on the web
-
-https://github.com/yhatt/marp-cli-example
-
-<style scoped>a { color: #eee; }</style>
-
-<!-- This is presenter note. You can write down notes through HTML comment. -->
+class:
+  - lead
+  - invert
 
 ---
-
-![Marp bg 60%](https://raw.githubusercontent.com/marp-team/marp/master/marp.png)
-
----
-
-![bg](#123)
-![](#fff)
-
-##### <!--fit--> [Marp CLI](https://github.com/marp-team/marp-cli) + [GitHub Pages](https://github.com/pages) | [Netlify](https://www.netlify.com/) | [Vercel](https://vercel.com/)
-
-##### <!--fit--> 👉 The easiest way to host<br />your Marp deck on the web
+# Ensemble Kalman Filter in Filterpy
 
 ---
+# Filterpy
 
-![bg right 60%](https://icongr.am/octicons/mark-github.svg)
+- Free and open source Kalman filter library
+    - https://github.com/rlabbe/filterpy
+    - Accompanied with the book: https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/
+        - contains many jupyter notebooks to play with
+    - Author: `"I opt for clear code that matches the equations in the relevant texts on a 1-to-1 basis, even when that has a performance cost."`
 
-## **[GitHub Pages](https://github.com/pages)**
-
-#### Ready to write & host your deck!
-
-[![Fork on GitHub h:1.5em](https://img.shields.io/github/forks/yhatt/marp-cli-example?label=Fork&style=social)](https://github.com/yhatt/marp-cli-example)
-
-<!-- _footer: ":information_source: Require to pass ACCESS_TOKEN as secret." -->
 
 ---
+## EnKF principles
 
-![bg right 60%](https://www.netlify.com/img/press/logos/logomark.svg)
-
-## **[Netlify](https://www.netlify.com/)**
-
-#### Ready to write & host your deck!
-
-[![Deploy to Netlify h:1.5em](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yhatt/marp-cli-example)
-
+- similar to unscented Kalman filter
+- uses an ensemble of hundreds to thousands of state vectors 
+    - samples "randomly" around estimate
+    - Monte Carlo algorithm
+- adds perturbations at each update and predict step 
 ---
 
-![bg right 60%](https://raw.githubusercontent.com/yhatt/marp-cli-example/master/vercel.svg?sanitize=true)
+## Parameters
 
-## **[Vercel](https://vercel.com/)**
-
-#### Ready to write & host your deck!
-
-[![Deploy to Vercel h:1.5em](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/yhatt/marp-cli-example)
-
+- __EnsembleKalmanFilter(x, P, dim_z, dt, N, hx, fx)__
+    - x: state mean
+    - P : covariance of the state
+    - dim_z : Number of of measurement inputs
+    - dt : time step in seconds
+    - N : number of sigma points (ensembles)
+    - hx : Measurement function that converts state x into a measurement
+    - fx : State transition function that projects
+        state x into the next time period
 ---
+### How to run it
+```python
+enkf = EnsembleKalmanFilter(x, P, dim_z, dt, N, hx, fx)
 
-### <!--fit--> :ok_hand:
+# Iter 1
+enkf.predict() #responses
+enkf.update(observations) #update step
 
+# Iter 2
+enkf.predict() #responses
+enkf.update(observations) #update step
+```
 ---
+### enkf.predict()
+- Sample normal distribution defined by $x^T$ and $P$ done $N$ times: ${x'}_{i=1..N}$
+- Execute "forward models": $f(x_i')$ &rightarrow; $sigma_i$
+- Add perturbation to $sigma_i$  defined by noise covariance
+- `enkf.sigmas` provides $N$ states
+---
+### enkf.update(obs) - I.
+- Ref: _John L Crassidis and John L. Junkins. Optimal Estimation of Dynamic Systems, 2012_
+- Run $h(f(x_i')\equiv sigma_i)$ &rightarrow; $sigma_i^h$ transform into observation space
+- $sigma_i^h$ provides evalution at `obs` points
+---
+### enkf.update(obs) - II.
+- For most scenarios $h(x) \sub f(x)$
+- Evalute `enkf.K` via $F(sigma_h, sigma, x)$
+- $sigma_i = sigma_i + K * |obs - sigma_h|$
+- `enkf.sigmas` provides $N$ updated states
 
-![bg 40% opacity blur](https://avatars1.githubusercontent.com/u/3993388?v=4)
 
-### Created by Yuki Hattori ([@yhatt](https://github.com/yhatt))
 
-https://github.com/yhatt/marp-cli-example
+
+
+    
+
