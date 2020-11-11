@@ -37,9 +37,8 @@ class:
     - `dim_z` : Number of of measurement inputs
     - ~~`dt` : time step in seconds~~
     - `N` : number of $\sigma$ points (ensembles)
-    - `hx` : Measurement function that converts state x into a measurement
-    - `fx` : State transition function that projects
-        state x _forward_
+    - `hx` : Measurement function that projects state x into a measurement space
+    - `fx` : State transition function 
 ---
 ### How to run it
 ```python
@@ -81,6 +80,7 @@ print('New state covariance is ', enkf.P)
 ### enkf.update(obs) - I.
 - Ref: _John L Crassidis and John L. Junkins. Optimal Estimation of Dynamic Systems, 2012_
 - Apply $h(\sigma_i)$ &rightarrow; $\sigma_i^h$ that transforms states into observation space
+   - Include "forward models"
 - $\sigma_i^h$ provides evalution at observation points
    - $\sigma^h \equiv N\times len(obs)$ matrix
 ---
