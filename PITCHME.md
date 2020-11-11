@@ -61,9 +61,9 @@ enkf.update(observations) #update step
 ---
 ### enkf.predict()
 - Sample $N$ times normal distribution $(x, P)$ &rightarrow; $\{{\sigma}_i\}$
-- Execute "forward models": $\sigma_i\equiv f(\sigma_i)+v_Q$
+- State change $\sigma_i\equiv f(\sigma_i)+v_Q$
    - apply state transition function $f$
-   - perturbation $v_Q$ defined by process noise covariance $C$
+   - perturbations $v_Q$ defined by process noise covariance $Q$
 - `enkf.sigmas` contains $N$ states
 - Recompute covariance
 $P = \frac{1}{N-1}\sum_{i=1}^N(\sigma_i-\bar{\sigma})(\sigma_i-\bar{\sigma})^T$
