@@ -20,9 +20,9 @@ class:
 
 
 ---
-## EnKF principles
+## Filterpy EnKF
 
-- similar to unscented Kalman filter
+- very lightweighted implementation
 - uses an ensemble of hundreds to thousands of state vectors 
     - samples "randomly" around estimate
     - Monte Carlo algorithm
@@ -32,18 +32,24 @@ class:
 ## Parameters
 
 - __EnsembleKalmanFilter(x, P, dim_z, dt, N, hx, fx)__
-    - x: state mean
-    - P : covariance of the state
-    - dim_z : Number of of measurement inputs
-    - dt : time step in seconds
-    - N : number of sigma points (ensembles)
-    - hx : Measurement function that converts state x into a measurement
-    - fx : State transition function that projects
-        state x into the next time period
+    - `x`: state mean
+    - `P` : covariance of the state
+    - `dim_z` : Number of of measurement inputs
+    - ~~`dt` : time step in seconds~~
+    - `N` : number of $\sigma$ points (ensembles)
+    - `hx` : Measurement function that converts state x into a measurement
+    - `fx` : State transition function that projects
+        state x _forward_
 ---
 ### How to run it
 ```python
+# setup input matrices and transformation functions hx and fx
 enkf = EnsembleKalmanFilter(x, P, dim_z, dt, N, hx, fx)
+
+# setup process noise
+enkf.Q = ...
+# setup measurement noise
+enkf.R = ...
 
 # Iter 1
 enkf.predict() #responses
@@ -55,21 +61,36 @@ enkf.update(observations) #update step
 ```
 ---
 ### enkf.predict()
-- Sample normal distribution defined by $x^T$ and $P$ done $N$ times: ${x'}_{i=1..N}$
-- Execute "forward models": $f(x_i')$ &rightarrow; $sigma_i$
-- Add perturbation to $sigma_i$  defined by noise covariance
-- `enkf.sigmas` provides $N$ states
+- Sample $N$ times normal distribution $(x, P)$ &rightarrow; $\{{\sigma}_i\}$
+- Execute "forward models": $\sigma_i\equiv f(\sigma_i)+v_Q$
+   - apply state transition function $f$
+   - perturbation $v_Q$ defined by process noise covariance $C$
+- `enkf.sigmas` contains $N$ states
+- Recompute covariance
+$P = \frac{1}{N-1}\sum_{i=1}^N(\sigma_i-\bar{\sigma})(\sigma_i-\bar{\sigma})^T$
+---
+### enkf.predict()
+```python
+enkf = EnsembleKalmanFilter(.)
+
+enkf.predict()
+enkf.sigmas.shape == (N, len(state))
+print('New state covariance is ', enkf.P)
+```
 ---
 ### enkf.update(obs) - I.
 - Ref: _John L Crassidis and John L. Junkins. Optimal Estimation of Dynamic Systems, 2012_
-- Run $h(f(x_i')\equiv sigma_i)$ &rightarrow; $sigma_i^h$ transform into observation space
-- $sigma_i^h$ provides evalution at `obs` points
+- Apply $h(\sigma_i)$ &rightarrow; $\sigma_i^h$ that transforms states into observation space
+- $\sigma_i^h$ provides evalution at observation points
+   - $\sigma^h \equiv N\times len(obs)$ matrix
 ---
 ### enkf.update(obs) - II.
-- For most scenarios $h(x) \sub f(x)$
-- Evalute `enkf.K` via $F(sigma_h, sigma, x)$
-- $sigma_i = sigma_i + K * |obs - sigma_h|$
-- `enkf.sigmas` provides $N$ updated states
+- Evaluate two matrices
+   - $Cov(\sigma_h, \sigma_h)$ and $Cov(\sigma, \sigma_h)$
+   - kalman gain $K = Cov(\sigma_h, \sigma_h) Cov(\sigma, \sigma_h)^{-1}$
+- $\sigma = \sigma + K * (obs - sigma_h+v_R)$
+- After the update step `enkf.sigmas` contains $N$ updated states
+
 
 
 
